@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Result - CreditBridge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .score-cards {
+        margin-bottom: 2rem;
+    }
+    
+    .score-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .score-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .score-value {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .score-label {
+        color: #6b7280;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+    }
+    
+    .risk-low { color: #10b981; }
+    .risk-medium { color: #f59e0b; }
+    .risk-high { color: #ef4444; }
+    
+    .chart-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .recommendation-card {
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .positive-card {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        border-left: 4px solid #10b981;
+    }
+    
+    .improvement-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .download-button {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .download-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold" style="color: white;">
+                <i class="bi bi-check-circle"></i> Credit Assessment Complete
+            </h1>
+            <p style="color: rgba(255,255,255,0.9);">Applicant: <strong>{{ user.name }}</strong> | Processed by: {{ processor.name }}</p>
+        </div>
+        
+        <!-- Score Cards -->
+        <div class="row score-cards">
+            <div class="col-md-4 mb-3">
+                <div class="card score-card">
+                    <div class="score-value {% if assessment.credit_score >= 750 %}risk-low{% elif assessment.credit_score >= 600 %}risk-medium{% else %}risk-high{% endif %}">
+                        {{ assessment.credit_score }}
+                    </div>
+                    <div class="score-label">Credit Score</div>
+                    <small class="text-muted">Range: 300-900</small>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card score-card">
+                    <h3 class="mb-3">
+                        <span class="badge {% if assessment.risk_category == 'Low Risk' %}bg-success{% elif assessment.risk_category == 'Medium Risk' %}bg-warning{% else %}bg-danger{% endif %} p-3">
+                            {{ assessment.risk_category }}
+                        </span>
+                    </h3>
+                    <div class="score-label">Risk Category</div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card score-card">
+                    <div class="score-value" style="color: #4f46e5;">
+                        {{ (assessment.repayment_probability * 100) | round(1) }}%
+                    </div>
+                    <div class="score-label">Repayment Probability</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 1 -->
+        <div class="row">
+            <div class="col-lg-6 mb-3">
+                <div class="chart-section">
+                    <h4 class="mb-4"><i class="bi bi-radar"></i> Behavioral Metrics</h4>
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="chart-section">
+                    <h4 class="mb-4"><i class="bi bi-bar-chart"></i> Feature Contributions</h4>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 2 -->
+        <div class="row">
+            <div class="col-lg-6 mb-3">
+                <div class="chart-section">
+                    <h4 class="mb-4"><i class="bi bi-graph-up"></i> Financial Health</h4>
+                    <div class="mb-3">
+                        <strong>Income Stability</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" style="width: {{ features.ISI * 100 }}%">{{ (features.ISI * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Expense Control</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-info" style="width: {{ features.ECR * 100 }}%">{{ (features.ECR * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Payment Consistency</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-primary" style="width: {{ features.PCS * 100 }}%">{{ (features.PCS * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Digital Activity</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-warning" style="width: {{ features.DAS * 100 }}%">{{ (features.DAS * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Savings Discipline</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-secondary" style="width: {{ features.SDR * 100 }}%">{{ (features.SDR * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Cashflow Health</strong>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-danger" style="width: {{ ((features.CHS + 1) / 2) * 100 }}%">{{ (features.CHS * 100) | round(1) }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="chart-section">
+                    <h4 class="mb-4"><i class="bi bi-wallet2"></i> Financial Profile</h4>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td><strong>Monthly Income</strong></td>
+                                <td class="text-end">₹{{ "{:,.2f}".format(profile.monthly_income) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Monthly Expenses</strong></td>
+                                <td class="text-end">₹{{ "{:,.2f}".format(profile.monthly_expenses) }}</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><strong>Net Savings</strong></td>
+                                <td class="text-end"><strong>₹{{ "{:,.2f}".format(profile.monthly_income - profile.monthly_expenses) }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Savings</strong></td>
+                                <td class="text-end">₹{{ "{:,.2f}".format(profile.savings_amount) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>UPI Transactions</strong></td>
+                                <td class="text-end">{{ profile.upi_transaction_count }}/month</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Payment Streak</strong></td>
+                                <td class="text-end">{{ profile.bill_payment_streak }} months</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Digital Banking</strong></td>
+                                <td class="text-end">{{ profile.digital_activity_months }} months</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations -->
+        <div class="row">
+            <div class="col-lg-6 mb-3">
+                <div class="recommendation-card positive-card">
+                    <h4 class="mb-3"><i class="bi bi-check-circle-fill text-success"></i> Positive Indicators</h4>
+                    <ul class="mb-0">
+                        {% if features.ISI >= 0.7 %}
+                        <li>Excellent income stability with low variation</li>
+                        {% endif %}
+                        {% if features.ECR >= 0.3 %}
+                        <li>Strong expense management and savings capacity</li>
+                        {% endif %}
+                        {% if features.PCS >= 0.7 %}
+                        <li>Consistent bill payment history demonstrates reliability</li>
+                        {% endif %}
+                        {% if features.DAS >= 0.5 %}
+                        <li>Active digital banking user showing financial engagement</li>
+                        {% endif %}
+                        {% if features.SDR >= 0.5 %}
+                        <li>Strong savings discipline with emergency fund</li>
+                        {% endif %}
+                        {% if features.CHS > 0.3 %}
+                        <li>Healthy business cashflow with positive margins</li>
+                        {% endif %}
+                        {% if features.ISI < 0.7 and features.ECR < 0.3 and features.PCS < 0.7 and features.DAS < 0.5 and features.SDR < 0.5 and features.CHS <= 0.3 %}
+                        <li>Applicant is building financial profile</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="recommendation-card improvement-card">
+                    <h4 class="mb-3"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Areas for Improvement</h4>
+                    <ul class="mb-0">
+                        {% if features.ISI < 0.5 %}
+                        <li>Work on stabilizing income sources to reduce variation</li>
+                        {% endif %}
+                        {% if features.ECR < 0.15 %}
+                        <li>Reduce monthly expenses to improve savings rate</li>
+                        {% endif %}
+                        {% if features.PCS < 0.5 %}
+                        <li>Maintain regular bill payments for at least 6 months</li>
+                        {% endif %}
+                        {% if features.DAS < 0.3 %}
+                        <li>Increase digital transaction frequency</li>
+                        {% endif %}
+                        {% if features.SDR < 0.25 %}
+                        <li>Build emergency savings fund (3-6 months expenses)</li>
+                        {% endif %}
+                        {% if features.CHS < 0 %}
+                        <li>Improve business profitability</li>
+                        {% endif %}
+                        {% if features.ISI >= 0.5 and features.ECR >= 0.15 and features.PCS >= 0.5 and features.DAS >= 0.3 and features.SDR >= 0.25 and features.CHS >= 0 %}
+                        <li>Continue maintaining current good financial practices</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Download PDF -->
+        <div class="text-center mb-5">
+            <a href="{{ url_for('generate_pdf', assessment_id=assessment.id) }}" class="btn download-button">
+                <i class="bi bi-file-earmark-pdf"></i> Download PDF Report
+            </a>
+            <div class="mt-3">
+                <a href="{{ url_for('home') }}" class="text-white">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+                <span class="text-white mx-2">|</span>
+                <a href="{{ url_for('new_assessment') }}" class="text-white">
+                    <i class="bi bi-plus-circle"></i> New Assessment
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Radar Chart
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+        labels: ['Income Stability', 'Expense Control', 'Payment Consistency', 'Digital Activity', 'Savings Discipline', 'Cashflow Health'],
+        datasets: [{
+            label: 'Behavioral Metrics',
+            data: [
+                {{ features.ISI * 100 }},
+                {{ features.ECR * 100 }},
+                {{ features.PCS * 100 }},
+                {{ features.DAS * 100 }},
+                {{ features.SDR * 100 }},
+                {{ (features.CHS + 1) / 2 * 100 }}
+            ],
+            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            borderColor: 'rgb(79, 70, 229)',
+            pointBackgroundColor: 'rgb(79, 70, 229)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(79, 70, 229)'
+        }]
+    },
+    options: {
+        scales: {
+            r: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Bar Chart
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+    type: 'bar',
+    data: {
+        labels: ['ISI', 'ECR', 'PCS', 'DAS', 'SDR', 'CHS'],
+        datasets: [{
+            label: 'Feature Score (%)',
+            data: [
+                {{ features.ISI * 100 }},
+                {{ features.ECR * 100 }},
+                {{ features.PCS * 100 }},
+                {{ features.DAS * 100 }},
+                {{ features.SDR * 100 }},
+                {{ (features.CHS + 1) / 2 * 100 }}
+            ],
+            backgroundColor: [
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(79, 70, 229, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(107, 114, 128, 0.8)',
+                'rgba(239, 68, 68, 0.8)'
+            ]
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Home - CreditBridge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-banner {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.9), rgba(124, 58, 237, 0.9));
+        color: white;
+        border-radius: 15px;
+        padding: 3rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        height: 100%;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.75rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-weight: 600;
+    }
+    
+    .action-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 100%;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .action-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2.5rem;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <h1 class="display-4 fw-bold mb-3">Welcome, {{ session.name }}!</h1>
+    <p class="lead">You're logged in as <strong>{{ session.role }}</strong></p>
+    <p class="mb-0">Empowering financial inclusion through AI-driven credit assessment for underserved communities.</p>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Assessments</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="stat-value">{{ stats.avg_score }}</div>
+            <div class="stat-label">Average Credit Score</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ stats.low_risk_percent }}%</div>
+            <div class="stat-label">Low Risk Percentage</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<h2 class="fw-bold mb-4" style="color: white;">Quick Actions</h2>
+<div class="row mb-5">
+    {% if 'create' in session.permissions or 'ALL' in session.permissions %}
+    <div class="col-md-4 mb-3">
+        <a href="{{ url_for('new_assessment') }}" class="action-card">
+            <div class="action-icon">
+                <i class="bi bi-plus-circle"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1f2937;">New Assessment</h4>
+            <p class="text-muted">Create a new credit risk assessment for an applicant</p>
+        </a>
+    </div>
+    {% endif %}
+    
+    {% if 'view_all' in session.permissions or 'ALL' in session.permissions %}
+    <div class="col-md-4 mb-3">
+        <a href="{{ url_for('applications') }}" class="action-card">
+            <div class="action-icon">
+                <i class="bi bi-list-ul"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1f2937;">View Applications</h4>
+            <p class="text-muted">Browse all credit assessment applications</p>
+        </a>
+    </div>
+    {% endif %}
+    
+    {% if 'analytics' in session.permissions or 'ALL' in session.permissions %}
+    <div class="col-md-4 mb-3">
+        <a href="{{ url_for('dashboard') }}" class="action-card">
+            <div class="action-icon">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1f2937;">Analytics Dashboard</h4>
+            <p class="text-muted">View comprehensive analytics and insights</p>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- How It Works -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="background: white; padding: 2rem;">
+            <h3 class="fw-bold mb-4" style="color: #4f46e5;">
+                <i class="bi bi-lightbulb"></i> How It Works
+            </h3>
+            <ol class="ps-3">
+                <li class="mb-3">
+                    <strong>Data Collection:</strong> Gather behavioral financial data from applicants (income, expenses, digital activity)
+                </li>
+                <li class="mb-3">
+                    <strong>AI Analysis:</strong> Our machine learning model analyzes 6 key behavioral metrics
+                </li>
+                <li class="mb-3">
+                    <strong>Credit Score:</strong> System generates a credit score (300-900) and risk category
+                </li>
+                <li class="mb-3">
+                    <strong>Report Generation:</strong> Professional PDF report with recommendations
+                </li>
+                <li class="mb-0">
+                    <strong>Decision Support:</strong> Use insights for informed lending decisions
+                </li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="background: white; padding: 2rem;">
+            <h3 class="fw-bold mb-4" style="color: #4f46e5;">
+                <i class="bi bi-star"></i> Key Features
+            </h3>
+            
+            <div class="feature-card" style="background: #f9fafb; padding: 1rem; margin-bottom: 1rem; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 1rem;">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div>
+                        <strong style="color: #1f2937;">AI-Powered Assessment</strong>
+                        <p class="mb-0 small text-muted">Machine learning based credit scoring</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="feature-card" style="background: #f9fafb; padding: 1rem; margin-bottom: 1rem; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 1rem;">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div>
+                        <strong style="color: #1f2937;">For Credit-Invisible</strong>
+                        <p class="mb-0 small text-muted">Designed for those without traditional credit history</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="feature-card" style="background: #f9fafb; padding: 1rem; margin-bottom: 1rem; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 1rem;">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+                    <div>
+                        <strong style="color: #1f2937;">Professional Reports</strong>
+                        <p class="mb-0 small text-muted">Bank-grade PDF reports with detailed insights</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="feature-card" style="background: #f9fafb; padding: 1rem; border-radius: 10px; margin-bottom: 0;">
+                <div class="d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 1rem;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div>
+                        <strong style="color: #1f2937;">Secure & Compliant</strong>
+                        <p class="mb-0 small text-muted">Data encryption and privacy protection</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
